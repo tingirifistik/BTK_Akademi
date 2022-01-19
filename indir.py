@@ -6,10 +6,8 @@ import platform
 
 os = platform.system()
 if os == "Windows":
-    clear = "cls"
     slash = "\\"
 else:
-    clear = "clear"
     slash = "/"
 
 ap = argparse.ArgumentParser(description='BTK Akademi Video Indirici')
@@ -24,7 +22,7 @@ def download(url, output):
     with open(output+json_file["name"], "wb") as f:
         print("{} --> Indiriliyor...".format(json_file["name"]))
         f.write(requests.get(json_file["url"]).content)
-        system(clear)
+        system("clear||cls")
                 
 if len(sys.argv) == 1:
     ap.print_help()
@@ -50,4 +48,4 @@ if args["file"] != None:
             download(i, output)
             
 if args["url"] != None:
-    download(args["url"], output)            
+    download(args["url"], output)
