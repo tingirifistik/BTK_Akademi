@@ -15,7 +15,7 @@ python3 indir.py -u https://cinema8.com/raw-video/MXBWzaJn?c=js-api
 ```
 veya
 ```
-python3 downloader.py -f url.txt -o C:\Users\username\Desktop
+python3 indir.py -f url.txt -o C:\Users\username\Desktop
 ```
 <h2>Ornek Url Dosyasi</h2>
 
