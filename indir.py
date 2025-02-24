@@ -4,63 +4,65 @@ from os import system
 from time import sleep
 
 ACCESS_TOKEN = ""
+BASE_URL = "https://www.btkakademi.gov.tr/api/service/v1"
+HEADERS = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:124.0) Gecko/20100101 Firefox/124.0", "Authorization": f"Bearer {ACCESS_TOKEN}", "Accept": "application/json, text/plain, */*", "Content-Type": "application/json"}
 
-def kurs_kayit(course_id):
-    url = f"https://www.btkakademi.gov.tr/api/service/v1/course/registration/register/{course_id}?language=tr"
-    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:124.0) Gecko/20100101 Firefox/124.0", "Authorization": f"Bearer {ACCESS_TOKEN}", "Accept": "application/json, text/plain, */*", "Content-Type": "application/json"}
-    r = requests.post(url, headers=headers, json={"demandForm": {}})
-    return r.json().get("status", "Error")
+def register_course(course_id):
+    url = f"{BASE_URL}/course/registration/register/{course_id}?language=tr"
+    response = requests.post(url, headers=HEADERS, json={"demandForm": {}})
+    return response.json().get("status", "Error")
 
-def liste1(course_id):
-    url = f"https://www.btkakademi.gov.tr/api/service/v1/public/51/course/details/program/syllabus/{course_id}?language=tr"
-    headers = {"User-Agent": "Mozilla/5.0", "Authorization": f"Bearer {ACCESS_TOKEN}"}
-    r = requests.get(url, headers=headers)
-    return r.json()
+def get_syllabus(course_id):
+    url = f"{BASE_URL}/public/51/course/details/program/syllabus/{course_id}?language=tr"
+    response = requests.get(url, headers=HEADERS)
+    return response.json()
 
-def sec(options, prompt):
+def select_option(options, prompt):
     for index, option in enumerate(options, start=1):
         print(f"{index}- {option['title']}")
-    choice = int(input(f"\n\n{prompt}: "))
-    return choice - 1
+    choice = int(input(f"\n{prompt}: ")) - 1
+    return choice
 
-def liste2(course_id, lesson_id):
-    url = f"https://www.btkakademi.gov.tr/api/service/v1/course/deliver/start/{lesson_id}"
-    headers = {"User-Agent": "Mozilla/5.0", "Authorization": f"Bearer {ACCESS_TOKEN}"}
-    r = requests.post(url, headers=headers, json={"programId": int(course_id)})
-    return r.json().get("remoteCourseReference", "")
+def start_lesson(course_id, lesson_id):
+    url = f"{BASE_URL}/course/deliver/start/{lesson_id}"
+    response = requests.post(url, headers=HEADERS, json={"programId": int(course_id)})
+    return response.json().get("remoteCourseReference", "")
 
-def video_url(video_id):
-    session = requests.Session()
+def get_video_url(video_id):
     url = f"https://cinema8.com/api/v1/uscene/rawvideo/flavor/{video_id}"
-    r = session.get(url).json()
-    return r.get("name", "video.mp4"), r.get("hlsUrl", "")
+    response = requests.get(url).json()
+    return response.get("name", "video.mp4"), response.get("hlsUrl", "")
 
 def download_video(video_name, video_url):
     if not video_url:
         print("Video URL bulunamadı!")
         return
-    output_template = video_name.split(".mp4")[0] + ".mp4"
+    output_template = video_name.replace(".mp4", "") + ".mp4"
     with YoutubeDL({'outtmpl': output_template}) as ydl:
         print(f"{video_name} indiriliyor...\n")
         ydl.download([video_url])
 
-if __name__ == "__main__":
-    kurs_url = input("Kurs URL: ")
-    kurs_id = kurs_url.split("-")[-1]
-    system("cls||clear")
-    print("Kursa kaydolma durumu: ", kurs_kayit(kurs_id))
-    sleep(1.5)
-    system("cls||clear")
-    syllabus = liste1(kurs_id)
-    bolum = sec(syllabus, "Bölüm seçin")
-    system("cls||clear")
-    ders_sec = sec(syllabus[bolum]["courses"], "Ders seçin")
-    ders_id = str(syllabus[bolum]["courses"][ders_sec]["id"])
-    system("cls||clear")
-    video_id = liste2(kurs_id, ders_id)
-    if not video_id:
-        print("ACCESS_TOKEN eksik veya geçersiz!")
-        sleep(2)
-        exit()
-    video_name, video_url = video_url(video_id)
-    download_video(video_name, video_url)
+course_url = input("Kurs URL: ")
+course_id = course_url.split("-")[-1]
+system("cls||clear")
+print("Kursa kaydolma durumu: ", register_course(course_id))
+sleep(1.5)
+system("cls||clear")
+
+syllabus = get_syllabus(course_id)
+section_index = select_option(syllabus, "Bölüm seçin")
+system("cls||clear")
+
+lesson_index = select_option(syllabus[section_index]["courses"], "Ders seçin")
+lesson_id = str(syllabus[section_index]["courses"][lesson_index]["id"])
+system("cls||clear")
+
+video_id = start_lesson(course_id, lesson_id)
+if not video_id:
+    print("ACCESS_TOKEN eksik veya geçersiz!")
+    sleep(2)
+    exit()
+    
+video_name, video_url = get_video_url(video_id)
+download_video(video_name, video_url)
+
